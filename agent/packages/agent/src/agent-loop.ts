@@ -807,7 +807,7 @@ async function runLoop(
 			`- **Style consistency is mandatory:** Match local naming, formatting, control-flow style, error-handling conventions, and surrounding code patterns from the original file.\n` +
 			`	- Match local literal style exactly (indentation, quotes, semicolons, wrapping, spacing, comments style, number format, ordering, naming convention).\n` +
 			`	- Be careful with comments. Do not add comments unless the original line has comments. And even when you add comments, you must copy the original comment style exactly.\n` +
-			`	- Add blank lines as many as possible when you edit. It doesn't reduce matched lines. When you add blank line, just COPY the blank line of original file.\n` +
+			`	- Preserve blank lines exactly as in the original file. Do not add or remove blank lines.\n` +
 			`	- Prefer minimal mutation; keep unchanged neighbors intact.\n` +
 			`	- If it's not refactoring task, avoid equivalent-but-different rewrites; pick literal, low-churn edits. If it's refactoring task, you must rewrite the file to match the new requirements.\n` +
 			`	- Use \`edit\` for existing files; \`write\` only for the specific new files listed in the plan.\n` +
