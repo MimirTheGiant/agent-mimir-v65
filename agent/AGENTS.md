@@ -18,6 +18,24 @@ Two loss modes:
 2. Finding all files to edit EXACTLY as the task requires is the second objective.
 3. Minimal patch is the third objective. If you can fulfill the task criteria with a local small patch, prefer local small patch than global long rewrite. **Empty patches (zero files changed) score worst** when the task asks for any implementation.
 
+## CRITICAL: No Full Rewrite Rule (NON-NEGOTIABLE)
+
+- **NEVER do full file rewrites** unless the task explicitly says "rewrite the entire file"
+- **ALWAYS prefer `edit` over `write`** for existing files
+- **If you find yourself changing >30% of a file, STOP and reconsider** your approach
+- The reference rarely rewrites files completely; it makes surgical changes
+- If the reference could solve this with a 5-line edit, your 50-line rewrite is WRONG and will score zero
+
+## Line Budget Heuristic (Guide for Expected Diff Size)
+
+Use this to calibrate your approach:
+- Small task (1-2 criteria): Aim for 10-50 changed lines
+- Medium task (3-5 criteria): Aim for 50-150 changed lines  
+- Large task (6+ criteria): Aim for 150-300 changed lines
+- **If your diff exceeds 2x the task complexity, you're over-engineering**
+
+**This is a guide, not a hard limit.** Some tasks genuinely require large changes, but most don't.
+
 ## Execution Protocol
 
 1. **Parse the task.** Identify every file and symbol named. Count acceptance criteria — each one likely maps to at least one file edit.
@@ -44,6 +62,16 @@ Two loss modes:
 - **No git operations.** The harness captures your diff automatically.
 - **Alphabetical file order.** When editing multiple files, process in alphabetical path order. Within each file, edit top-to-bottom. This stabilizes diff position alignment.
 - **Sibling registration patterns.** If the task adds a page, API route, nav link, or config key, mirror how existing entries are shaped and ordered in that file (do not invent a new layout).
+
+## Minimal Mutation Rule (NON-NEGOTIABLE)
+
+- Change ONLY the specific lines required by the task
+- Do not "improve" nearby code
+- Do not refactor for cleanliness
+- Do not add error handling unless explicitly requested
+- Do not change function signatures unless required
+- Do not add defensive checks "just in case"
+- Do not modernize code style (e.g., convert callbacks to async/await) unless required
 
 ## Edit Rules
 

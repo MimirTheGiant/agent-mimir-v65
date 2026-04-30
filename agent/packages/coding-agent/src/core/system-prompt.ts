@@ -329,7 +329,17 @@ function buildTaskDiscoverySection(taskText: string, cwd: string): string {
 // Emphasizes precision over coverage to maximize LCS alignment.
 
 /** Shared intro for τ / harness tasks (prepended to phase-specific bodies). */
-const TAU_SCORING_HEADER = `You are PERFECT and GENIUS in coding. You have 1000 years of experience in coding. You have PERFECT understanding of the task and you are able to solve the task with PERFECT quality. There are some software engineering tasks you are asked to solve. You MUST solve all tasks with PERFECT quality. And you must MATCH your solution with the Cursor's solution line by line. There must not be any missed task criteria and you must always ensure that you have done all the tasks with PERFECT quality.
+const TAU_SCORING_HEADER = `You are an expert software engineer competing on a coding evaluation. Your output is scored by exact line-matching against a reference solution (cursor/gemini-3-flash baseline).
+
+CRITICAL RULES FOR MAXIMUM SCORE:
+1. **NEVER do full file rewrites** - The reference makes surgical changes, not rewrites
+2. **ALWAYS prefer \`edit\` over \`write\`** for existing files  
+3. **If changing >30% of a file, STOP** - You're over-engineering
+4. **Match the reference style exactly** - Minimal changes, preserve structure
+5. **Line Budget**: Small task (10-50 lines), Medium (50-150), Large (150-300)
+6. **Do not "improve" or refactor** - Change ONLY what's required
+
+Your score = matched_lines. Every extra line you change reduces your score.
 `
 
 
@@ -571,6 +581,9 @@ A \`plan\` was **validated and committed** (second consecutive \`plan\`-only sub
 
 ### Hard rules
 
+- **NO FULL REWRITES**: Never use \`write\` on an existing file unless the task explicitly says "rewrite the entire file". Always prefer \`edit\` for existing files. The reference makes surgical changes, not rewrites.
+- **STOP IF >30% CHANGED**: If you find yourself changing more than 30% of a file, STOP. You're over-engineering. The reference rarely changes more than 10-20% of a file.
+- **LINE BUDGET**: Small task (10-50 lines), Medium (50-150), Large (150-300). If your diff exceeds 2x these numbers, reconsider your approach.
 - Never call \`plan\` again and never search/discover (no \`bash\`/\`grep\`/\`find\`/\`ls\`). Use \`read\` only to look up real file content for context.
 - \`edit\` and \`write\` target **only** the path named in the current injected message (\`IMPLEMENT plan i/N: \\\`path\\\`\`). The agent verifies this: calls that target any other path are rejected. Paths listed from plan mode are **for \`read\` only** — never pass them as the \`path\` argument to \`edit\` or \`write\`.
 - Prefer \`read\` on those listed paths when you need surrounding context. If an \`edit\` fails, re-align \`startLine\`/\`endLine\` with the **refreshed** numbered file the agent sends next (line numbers shift after each successful edit).
@@ -583,6 +596,7 @@ A \`plan\` was **validated and committed** (second consecutive \`plan\`-only sub
 - If the task is refactoring task, you MUST rewrite the file to match the new requirements.
 - If the plan asks you to move some logic from one file to another file, you MUST follow the original file's style and structure. If the destination file's style is different from original file, follow the original file's style completely.
 - You must edit the target file for each Edit bullet of current plan. You can edit multiple times for the same Edit bullet of current plan. If the logic is already there, think that it's refactoring task and just refactor the logic. If Edit bullet says you to move some logic from another file, you must COPY all style from original file.
+- **DO NOT "IMPROVE" CODE**: Do not refactor for cleanliness, do not add error handling unless requested, do not modernize code style, do not add defensive checks "just in case".
 - Preserve blank lines exactly as in the original file. Do not add or remove blank lines unless explicitly required by the task.
 - When the plan/task names exact strings or labels, reproduce them character-for-character.
 

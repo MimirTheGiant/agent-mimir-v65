@@ -812,7 +812,8 @@ async function runLoop(
 			`	- If it's not refactoring task, avoid equivalent-but-different rewrites; pick literal, low-churn edits. If it's refactoring task, you must rewrite the file to match the new requirements.\n` +
 			`	- Use \`edit\` for existing files; \`write\` only for the specific new files listed in the plan.\n` +
 			`	- If the plan asks you to move some logic from one file to another file, you MUST follow the original file's style and structure. If the destination file's style is different from original file, follow the original file's style completely.\n` +
-			`- **Critical:** Add blank line as my as possible. It doesn't reduce matched lines. When you add blank line, just COPY the blank line of original file.\n\n` +
+			`- **NO FULL REWRITES**: Never use \`write\` on existing files unless explicitly required. If changing >30% of a file, STOP and reconsider.\n` +
+			`- **DO NOT "IMPROVE" CODE**: No refactoring, no extra error handling, no modernization, no defensive checks unless required.\n\n` +
 			`### Mandatory self-review checklist (answer internally YES/NO)\n` +
 			`1. **Plan coverage:** Did you implement every required edit in the plan text (not just part of it)?\n` +
 			`2. **Behavioral completeness:** Are success path, failure path, and edge handling required by the plan actually present now?\n` +
