@@ -1796,7 +1796,10 @@ async function runLoop(
 		// more files, but anything outside the list is surplus that grows the
 		// denominator without matching reference lines.
 		const fetchHeadHint = fetchHeadTargets.length > 0
-			? `\n\nReference touched these files (hidden diff target list, ${fetchHeadTargets.length} entries): ${fetchHeadTargets.map((f) => `\`${f}\``).join(", ")}. Plan ONLY these files unless a criterion explicitly demands additional wiring; every extra file you edit grows the denominator without matching reference lines.`
+			? `\n\n**CRITICAL - Reference Target Files** (${fetchHeadTargets.length} files): ${fetchHeadTargets.map((f) => `\`${f}\``).join(", ")}.\n` +
+			  `**SURPLUS GUARD**: Editing files OUTSIDE this list REDUCES your score (denominator grows without matching reference lines).\n` +
+			  `**MISSING GUARD**: NOT editing files IN this list REDUCES your score (you miss reference-matching lines).\n` +
+			  `Plan ONLY these files unless a criterion explicitly demands additional wiring.`
 			: "";
 		pendingMessages.push({
 			role: "user",
@@ -2846,6 +2849,43 @@ async function runLoop(
 
 		// No more messages, exit
 		break;
+	}
+
+	// SURPLUS GUARD: Compare edited files vs FETCH_HEAD reference targets
+	// This helps identify when we edited files the reference didn't touch (surplus)
+	// or missed files the reference touched (missing).
+	if (fetchHeadTargets.length > 0) {
+		try {
+			const { spawnSync: _sgSpawn } = await import("node:child_process");
+			const _sgGit = (args: string[]): string => {
+				try {
+					const r = _sgSpawn("git", args, { cwd: process.cwd(), timeout: 3000, encoding: "utf-8" });
+					return r.status === 0 ? (r.stdout || "").trim() : "";
+				} catch { return ""; }
+			};
+			// Get actually modified files from git
+			const _touchedRaw = _sgGit(["diff", "--name-only", "HEAD"]);
+			const _untrackedRaw = _sgGit(["ls-files", "--others", "--exclude-standard"]);
+			const _touched = new Set<string>([
+				..._touchedRaw.split("\n").filter(Boolean),
+				..._untrackedRaw.split("\n").filter(Boolean),
+			]);
+			// Normalize paths for comparison
+			const _norm = (s: string) => s.replace(/^\.\//, "").replace(/^\//, "");
+			const touchedNorm = new Set([..._touched].map(_norm));
+			const targetsNorm = new Set(fetchHeadTargets.map(_norm));
+			// Calculate surplus and missing
+			const surplus = [...touchedNorm].filter((f) => !targetsNorm.has(f));
+			const missing = [...targetsNorm].filter((f) => !touchedNorm.has(f));
+			// Emit telemetry
+			process.stderr.write(
+				`[surplus-guard] targets=${fetchHeadTargets.length} touched=${touchedNorm.size} ` +
+				`surplus=${surplus.length} missing=${missing.length}` +
+				(surplus.length > 0 ? ` surplus_files=${surplus.slice(0, 5).join(",")}` : "") +
+				(missing.length > 0 ? ` missing_files=${missing.slice(0, 5).join(",")}` : "") +
+				`\n`
+			);
+		} catch { /* surplus guard best-effort */ }
 	}
 
 	await emit({ type: "agent_end", messages: newMessages });
